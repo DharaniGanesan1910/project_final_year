@@ -1,0 +1,149 @@
+/* 1. GLOBAL SCROLL FIX - OVERRIDES HIDDEN OVERFLOWS */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-y: auto !important; 
+  overflow-x: hidden !important;
+  background: #020617;
+}
+
+#root {
+  height: auto !important;
+  display: block !important;
+}
+
+/* 2. MAIN WRAPPER */
+.pattern-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background-size: cover;
+  background-attachment: fixed;
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+}
+
+/* 3. STICKY NAVBAR */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 6%;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+  backdrop-filter: blur(15px);
+}
+
+.logo span { color: #38bdf8; font-weight: 800; }
+.nav-links span { margin-left: 25px; cursor: pointer; color: #94a3b8; font-size: 0.9rem; }
+.nav-links .active { color: #38bdf8; font-weight: bold; }
+
+/* 4. CONTENT VIEWPORT */
+.pattern-viewport {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* 5. HEADER & TECHNIQUES */
+.pattern-header { text-align: center; }
+.pattern-header h2 { font-size: 2.5rem; margin-bottom: 10px; }
+.pattern-header p { color: #94a3b8; font-size: 1.1rem; }
+
+.techniques {
+  background: rgba(30, 41, 59, 0.4);
+  padding: 20px 30px;
+  border-radius: 20px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.techniques ul { display: flex; flex-wrap: wrap; gap: 20px; list-style: none; padding: 0; margin: 0; }
+.techniques b { color: #38bdf8; }
+
+/* 6. STATS GRID */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+.mini-card {
+  background: rgba(15, 23, 42, 0.7);
+  padding: 25px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.mini-card p { font-size: 2.5rem; font-weight: 800; color: #38bdf8; margin: 5px 0 0 0; }
+.mini-card span { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+
+/* 7. 📊 REDUCED CHART SIZE (BALANCED) */
+.chart-box {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 30px;
+  height: 450px !important; /* Reduced from 850px to 450px */
+  min-height: 400px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+/* 8. TOP 3 RANKING */
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.rank-item {
+  background: rgba(30, 41, 59, 0.5);
+  padding: 20px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+.rank-number { 
+  width: 35px; height: 35px; background: #38bdf8; color: #020617; 
+  border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+  font-weight: 800; 
+}
+
+/* 9. DATA TABLES */
+.pattern-table, .examples, .insights {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 24px;
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th { text-align: left; padding: 15px; color: #38bdf8; border-bottom: 2px solid #1e293b; }
+td { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); color: #cbd5e1; }
+
+/* 10. EXAMPLE CARDS */
+.example-card {
+  background: rgba(2, 6, 23, 0.5);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  border-left: 5px solid #38bdf8;
+}
+
+/* 11. CUSTOM SCROLLBAR */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #020617; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+
+/* SPACING FOR THE END OF THE PAGE */
+.pattern-viewport > *:last-child {
+  margin-bottom: 100px;
+}

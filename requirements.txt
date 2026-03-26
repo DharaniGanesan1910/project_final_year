@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+nltk
+spacy
+emoji
+langdetect
+transformers
+torch
+sentencepiece
+mlxtend
+matplotlib
+seaborn
+pyenchant

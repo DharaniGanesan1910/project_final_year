@@ -1,0 +1,10 @@
+.feature-list {
+  margin-top: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+.feature-list li {
+  padding: 8px 0;
+}

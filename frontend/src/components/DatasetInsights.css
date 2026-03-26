@@ -1,0 +1,168 @@
+/* 1. GLOBAL SCROLL FIX & WRAPPER */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-y: auto !important; 
+  background: #020617;
+}
+
+.dataset-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background-size: cover;
+  background-attachment: fixed;
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+}
+
+/* 2. STICKY NAVBAR */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 6%;
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+}
+
+.logo span { color: #38bdf8; font-weight: 800; }
+.nav-links span { margin-left: 25px; cursor: pointer; color: #94a3b8; font-size: 0.9rem; }
+.nav-links .active { color: #38bdf8; font-weight: bold; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; }
+
+/* 3. VIEWPORT & HEADER */
+.dataset-viewport {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 50px 20px;
+}
+
+.dataset-header { text-align: center; margin-bottom: 40px; }
+.dataset-header h1 { font-size: 2.8rem; margin-bottom: 10px; }
+.dataset-header p { color: #94a3b8; font-size: 1.1rem; }
+
+/* 4. SUMMARY CARDS (Top Stats) */
+.summary-cards {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.summary-cards .mini-card {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 20px 40px;
+  border-radius: 20px;
+  text-align: center;
+  min-width: 200px;
+}
+
+.summary-cards span { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+.summary-cards p { font-size: 2rem; font-weight: 800; color: #38bdf8; margin: 5px 0 0 0; }
+
+/* 5. INSIGHT GRID - 2 COLUMNS */
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 30px;
+}
+
+/* 6. INSIGHT CARDS */
+.insight-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.insight-card:hover { transform: translateY(-5px); border-color: rgba(56, 189, 248, 0.3); }
+
+.insight-card h3 { 
+  font-size: 1.2rem; 
+  margin-bottom: 20px; 
+  color: #f8fafc; 
+  border-left: 4px solid #38bdf8;
+  padding-left: 15px;
+}
+
+/* 7. CHART BOXES */
+.chart-box {
+  height: 320px; /* Balanced height for grid items */
+  width: 100%;
+  position: relative;
+  margin-bottom: 15px;
+}
+
+/* Specific adjustment for Pie charts to prevent them from looking stretched */
+.pie-adjust {
+  height: 280px;
+  display: flex;
+  justify-content: center;
+}
+
+.observation {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  background: rgba(30, 41, 59, 0.4);
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  margin-top: auto;
+}
+
+/* 8. SAMPLES LIST */
+.insight-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.insight-card li {
+  background: rgba(2, 6, 23, 0.4);
+  padding: 12px 18px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  border-left: 3px solid #f43f5e; /* Highlight for sample data */
+}
+
+/* 9. LOADER SCREEN */
+.loader-screen {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #020617;
+  color: #38bdf8;
+  font-size: 1.5rem;
+  letter-spacing: 2px;
+}
+
+/* 10. CUSTOM SCROLLBAR */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #020617; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+
+/* EXTRA SPACING */
+.dataset-viewport {
+  margin-bottom: 100px;
+}
+
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 768px) {
+  .insight-grid { grid-template-columns: 1fr; }
+  .summary-cards { flex-direction: column; align-items: center; }
+  .dataset-header h1 { font-size: 2rem; }
+}

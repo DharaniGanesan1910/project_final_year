@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Models & ML files
+*.pkl
+*.npy
+*.safetensors
+
+# Data files
+*.csv
+*.tsv
+
+# Environment
+.env
+
+# Build
+dist/
+build/
