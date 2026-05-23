@@ -7,7 +7,8 @@ import torch
 import joblib
 import os
 import re
-
+import enchant
+english_dict = enchant.Dict("en_US")
 from transformers import AutoTokenizer, AutoModel
 
 app = Flask(__name__)
@@ -76,59 +77,77 @@ def contains_offensive_word(text):
     import unicodedata
     text = unicodedata.normalize('NFC', text)
 
-    # English + Roman Tamil
     words = re.findall(r'\b\w+\b', text.lower())
-
-    # Tamil script
     tamil_words = re.findall(r'[\u0B80-\u0BFF]+', text)
 
-    # Combine
     all_words = words + tamil_words
 
     for w in all_words:
         if w in all_offensive_words:
-            return True
+            return w   # return matched word
 
-    return False
+    return None
 
 # -----------------------------
 # Handcrafted features
 # -----------------------------
+def preprocess_text(text):
+    text = text.lower()
+
+    # remove URLs
+    text = re.sub(r'http\S+|www\.\S+', '', text)
+
+    # remove mentions and hashtags
+    text = re.sub(r'@\w+', '', text)
+    text = re.sub(r'#\w+', '', text)
+
+    # keep only Tamil + English letters
+    text = re.sub(r'[^a-zA-Z\u0B80-\u0BFF\s]', '', text)
+
+    # normalize spaces
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    return text
+def get_tokens(text):
+    text = text.lower()
+
+    # remove extra spaces first
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    # split but keep only words
+    return re.findall(r"[a-zA-Z\u0B80-\u0BFF]+", text)
+def count_punctuations(text):
+    return len(re.findall(r"[.,!?;:()\"']", text))
 def handcrafted_features(text):
 
     words = re.findall(r'\b\w+\b', text.lower())
-    total_tokens = len(words)
+    total = len(words)
 
-    ta_off = sum(1 for w in words if w in tamil_offensive)
-    en_off = sum(1 for w in words if w in english_offensive)
+    tamil_off = sum(1 for w in words if w in tamil_offensive)
+    english_off = sum(1 for w in words if w in english_offensive)
+
+    punct_count = count_punctuations(text)
 
     features = [
+        tamil_off,
+        english_off,
+        tamil_off + english_off,   # total offensive
 
-        ta_off,
-        en_off,
-        ta_off + en_off,
+        (tamil_off + english_off) / total if total else 0,
 
-        (ta_off + en_off) / total_tokens if total_tokens else 0,
-
-        total_tokens,
+        total,
+        punct_count,
 
         text.count("!"),
         text.count("?"),
-
-        len(re.findall(r'[.,;:]', text)),
-
         sum(c.isdigit() for c in text),
-
         sum(1 for c in text if c.isupper()),
-
         len(re.findall(r'(.)\1{2,}', text)),
     ]
 
     vec = np.zeros(55)
     vec[:len(features)] = features
-
     return vec
-
 # -----------------------------
 # Transformer features
 # -----------------------------
@@ -155,10 +174,169 @@ def transformer_features(text):
     cls_attention = np.pad(cls_attention,(0,128-len(cls_attention)))[:128]
 
     return cls_embedding, cls_attention
+ # IMPORTANT: use split, not regex
+def get_language_stats(words):
+
+    tamil_count = 0
+    english_count = 0
+
+    for w in words:
+        if english_dict.check(w):
+            english_count += 1
+        else:
+            tamil_count += 1
+
+    return {
+        "total_tokens": len(words),
+        "tamil_tokens": tamil_count,
+        "english_tokens": english_count
+    }
+def get_token_languages(tokens):
+    result = []
+
+    for t in tokens:
+        if re.fullmatch(r'[\u0B80-\u0BFF]+', t):
+            lang = "Tamil"
+        elif english_dict.check(t):
+            lang = "English"
+        else:
+            lang = "Tamil"
+
+        result.append({
+            "token": t,
+            "language": lang
+        })
+
+    return result
+def get_code_switching_position(tokens):
+
+    n = len(tokens)
+
+    if n < 2:
+        return {
+            "total_switches": 0,
+            "beginning_switches": 0,
+            "middle_switches": 0,
+            "end_switches": 0,
+            "switch_frequency": 0
+        }
+
+    total_transitions = n - 1
+
+    begin_switch = 0
+    mid_switch = 0
+    end_switch = 0
+    total_switches = 0
+
+    for i in range(total_transitions):
+        prev_lang = detect_lang(tokens[i])
+        curr_lang = detect_lang(tokens[i + 1])
+
+        if prev_lang != curr_lang:
+            total_switches += 1
+
+            ratio = i / total_transitions
+
+            if ratio < 0.33:
+                begin_switch += 1
+            elif ratio < 0.66:
+                mid_switch += 1
+            else:
+                end_switch += 1
+
+    return {
+        "total_switches": total_switches,
+        "beginning_switches": begin_switch,
+        "middle_switches": mid_switch,
+        "end_switches": end_switch,
+        "switch_frequency": round(total_switches / total_transitions, 3)
+    }
+import re
+import enchant
+
+english_dict = enchant.Dict("en_US")
+
+def detect_lang(token):
+    # Tamil script
+    if re.fullmatch(r'[\u0B80-\u0BFF]+', token):
+        return "TA"
+
+    # English word
+    elif english_dict.check(token):
+        return "EN"
+
+    # fallback → treat non-English dictionary words as Tamil (NO unknown category)
+    return "TA"
+
+
+def get_token_languages(tokens):
+    return [
+        {
+            "token": t,
+            "language": detect_lang(t)
+        }
+        for t in tokens
+    ]
+
+
+def get_code_switching(tokens):
+
+    transitions = {
+        "TA->EN": 0,
+        "EN->TA": 0,
+        "TA->TA": 0,
+        "EN->EN": 0
+    }
+
+    if not tokens:
+        return transitions
+
+    prev = detect_lang(tokens[0])
+
+    for t in tokens[1:]:
+        curr = detect_lang(t)
+
+        key = f"{prev}->{curr}"
+        transitions[key] += 1
+
+        prev = curr
+
+    return transitions
+def count_digits(text):
+    return sum(c.isdigit() for c in text)
+
+import re
+
+def count_emojis(text):
+
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map
+        "\U0001F1E0-\U0001F1FF"  # flags
+        "\U00002700-\U000027BF"  # dingbats
+        "\U000024C2-\U0001F251"
+        "]+",
+        flags=re.UNICODE
+    )
+
+    return len(emoji_pattern.findall(text))
+def count_total_characters(text):
+    return len(text)
+def uppercase_count(text):
+    return sum(1 for c in text if c.isupper())
+
+def uppercase_ratio(text):
+    return uppercase_count(text) / len(text) if text else 0
+
+import re
+
+def repeated_char_count(text):
+    return len(re.findall(r"(.)\1{2,}", text))  # 3+ repeated chars
 
 # -----------------------------
 # Prediction API
-# -----------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
 
@@ -166,36 +344,66 @@ def predict():
     text = data["text"]
 
     # -----------------------------
-    # 1️⃣ Lexicon rule override
+    # PREPROCESS FIRST
     # -----------------------------
-    if contains_offensive_word(text):
+    processed_text = preprocess_text(text)
+
+    # -----------------------------
+    # TOKENS FROM CLEAN TEXT
+    # -----------------------------
+    tokens = get_tokens(processed_text)
+
+    # -----------------------------
+    # LANGUAGE STATS (FIXED INPUT)
+    # -----------------------------
+    lang_stats = get_language_stats(tokens)
+    code_switch = get_code_switching(tokens)
+    position_switch = get_code_switching_position(tokens)
+    uppercase_cnt = sum(1 for c in text if c.isupper())
+    uppercase_ratio = uppercase_cnt / len(text) if text else 0
+
+    repeated_chars = len(re.findall(r"(.)\1{2,}", text))
+    # -----------------------------
+    # LEXICON CHECK
+    # -----------------------------
+    matched_word = contains_offensive_word(processed_text)
+
+    reason = ""
+
+    # -----------------------------
+    # CASE 1: LEXICON MATCH
+    # -----------------------------
+    if matched_word:
 
         label = "Offensive"
         prob = 1.0
+        reason = f"Offensive word '{matched_word}' detected from lexicon"
 
+        # still run ML features for consistency (optional but good)
+        hand = handcrafted_features(processed_text)
+        cls, att = transformer_features(processed_text)
+
+    # -----------------------------
+    # CASE 2: ML MODEL
+    # -----------------------------
     else:
 
-        # -----------------------------
-        # 2️⃣ Hybrid ML Prediction
-        # -----------------------------
-        hand = handcrafted_features(text)
-
-        cls, att = transformer_features(text)
+        hand = handcrafted_features(processed_text)
+        cls, att = transformer_features(processed_text)
 
         fused = np.concatenate([hand, cls, att])
-
         X = fused.reshape(1, -1)
 
         X_scaled = scaler.transform(X)
-
         X_selected = selector.transform(X_scaled)
 
         prob = model.predict_proba(X_selected)[0][1]
 
         label = "Offensive" if prob >= threshold else "Non-Offensive"
+        reason = "No offensive words detected"
 
     # -----------------------------
-    # 3️⃣ Store recent predictions
+    # HISTORY
     # -----------------------------
     recent_predictions.append({
         "text": text,
@@ -204,15 +412,58 @@ def predict():
 
     if len(recent_predictions) > 10:
         recent_predictions.pop(0)
+    token_languages = get_token_languages(tokens)
 
-    # -----------------------------
-    # 4️⃣ Return response
-    # -----------------------------
-    return jsonify({
-        "prediction": label,
-        "confidence": round(float(prob), 3)
+    bert_tokens = tokenizer.tokenize(processed_text)
+
+    attention_scores = []
+
+    for i, token in enumerate(bert_tokens):
+       score = float(att[i+1]) if i+1 < len(att) else 0
+
+       attention_scores.append({
+        "token": token,
+        "score": round(score, 3)
     })
 
+
+    # -----------------------------
+    # RESPONSE
+    # -----------------------------
+    return jsonify({
+    "prediction": label,
+    "confidence": round(float(prob), 3),
+    "reason": reason,
+
+    "processed_text": processed_text,
+
+    "tokens": tokens,
+    "token_count": len(tokens),
+    "token_languages": token_languages, 
+     "code_switching": code_switch, 
+     "code_switching_position": position_switch,
+     "attention_scores": attention_scores, 
+   "features": {
+    "total_tokens": lang_stats["total_tokens"],
+    "tamil_tokens": lang_stats["tamil_tokens"],
+    "english_tokens": lang_stats["english_tokens"],
+
+    "tamil_offensive": sum(1 for w in tokens if w in tamil_offensive),
+    "english_offensive": sum(1 for w in tokens if w in english_offensive),
+    "total_offensive": sum(
+        1 for w in tokens if (w in tamil_offensive or w in english_offensive)
+    ),
+
+    "total_characters": len(text),
+
+    "punctuation_count": count_punctuations(text),
+    "digit_count": count_digits(text),
+    "emoji_count": count_emojis(text), "uppercase_count": uppercase_cnt,
+        "uppercase_ratio": round(uppercase_ratio, 3),
+
+        "repeated_char_count": repeated_chars
+}
+})
 # -----------------------------
 # Pattern analytics API
 # -----------------------------

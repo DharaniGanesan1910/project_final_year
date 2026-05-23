@@ -75,4 +75,4 @@ print(classification_report(y_test, y_pred))
 joblib.dump(model, "offensive_model_xgb.pkl")
 np.save("optimal_threshold.npy", np.array([optimal_threshold]))
 
-print("\nModel and threshold saved successfully ✅")
+print("\nModel and threshold saved successfully ")

@@ -1,19 +1,34 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
-# Load your processed file
-df = pd.read_csv('pattern.csv')
+# Load dataset
+df = pd.read_csv("pattern.csv")
 
-# Get Top 5 patterns
-pattern = df['predicted_structure'].value_counts().head(8)
+# Get top patterns
+pattern_counts = df['predicted_structure'].value_counts().head(8)
 
-# Plotting
-plt.figure(figsize=(10, 6))
-pattern.plot(kind='bar', color='skyblue', edgecolor='black')
-plt.title('Grammatical Structures in Tamil-English Code-Mixed Data', fontsize=14)
-plt.xlabel('Grammatical Pattern (S-V-O-C-A)', fontsize=12)
-plt.ylabel('Number of Sentences', fontsize=12)
-plt.xticks(rotation=0)
-plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.savefig('structure_distribution.png')
-print("Chart saved as structure_distribution.png")
+# Convert to 2D format (required for heatmap)
+heatmap_data = pd.DataFrame(pattern_counts).T
+
+# Plot heatmap
+plt.figure(figsize=(12, 4))
+
+sns.heatmap(
+    heatmap_data,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    linewidths=0.5,
+    cbar=True
+)
+
+plt.title("Grammatical Structures Heatmap (Tamil-English Code-Mixed)")
+plt.xlabel("Grammatical Pattern (S-V-O-C-A)")
+plt.ylabel("Frequency Row")
+
+plt.tight_layout()
+plt.savefig("structure_heatmap.png", dpi=300)
+plt.show()
+
+print("Heatmap saved as structure_heatmap.png")
